@@ -75,7 +75,7 @@ class _SetBudgetSheetState extends State<SetBudgetSheet> {
             style: const TextStyle(fontSize: 18),
             decoration: InputDecoration(
               labelText: 'Monthly Limit',
-              prefixText: '₹ ',
+              prefixText: '\$ ',
               prefixStyle: const TextStyle(fontSize: 18),
               filled: true,
               fillColor: AppColors.background,

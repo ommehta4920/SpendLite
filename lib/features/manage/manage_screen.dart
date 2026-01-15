@@ -1,3 +1,4 @@
+// lib/features/manage/manage_screen.dart
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -23,7 +24,11 @@ class ManageScreen extends StatelessWidget {
         children: const [
           Text(
             'Budget',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text, // Ensure text color is consistent
+            ),
           ),
           SizedBox(height: 8),
           _EditBudgetCard(),
@@ -32,7 +37,11 @@ class ManageScreen extends StatelessWidget {
 
           Text(
             'Transactions',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.text,
+            ),
           ),
           SizedBox(height: 8),
           _TransactionList(),
@@ -54,21 +63,33 @@ class _EditBudgetCard extends StatelessWidget {
       builder: (context, box, _) {
         final now = DateTime.now();
 
-        final budget = box.values.firstWhere(
-              (b) => b.year == now.year && b.month == now.month,
-          orElse: () => MonthlyBudget(year: now.year, month: now.month, limit: 0),
-        );
+        MonthlyBudget? budget;
+        try {
+          budget = box.values.firstWhere(
+                (b) => b.year == now.year && b.month == now.month,
+          );
+        } catch (_) {
+          budget = null;
+        }
+
+        final currentLimit = budget?.limit ?? 0;
 
         return Card(
           color: AppColors.card,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ListTile(
-            title: const Text('Monthly Budget'),
-            subtitle: Text(
-              budget.limit > 0
-                  ? '₹${budget.limit.toStringAsFixed(2)}'
-                  : 'No budget set',
+            title: const Text(
+              'Monthly Budget',
+              style: TextStyle(color: AppColors.text),
             ),
-            trailing: const Icon(Icons.edit),
+            subtitle: Text(
+              currentLimit > 0
+              // ✅ CHANGED TO DOLLAR SIGN
+                  ? '\$${currentLimit.toStringAsFixed(2)}'
+                  : 'No budget set',
+              style: const TextStyle(color: AppColors.mutedText),
+            ),
+            trailing: const Icon(Icons.edit, color: AppColors.primary),
             onTap: () {
               showModalBottomSheet(
                 context: context,
@@ -97,9 +118,12 @@ class _TransactionList extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: Hive.box<Expense>('expenses').listenable(),
       builder: (context, box, _) {
-        final expenses = box.values.toList().reversed.toList();
+        final expenses = box.values.toList()
+          ..sort((a, b) => b.date.compareTo(a.date)); // Sort newest first
 
-        if (expenses.isEmpty) {
+        final reversedExpenses = expenses.reversed.toList();
+
+        if (reversedExpenses.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(24),
             child: Center(
@@ -112,18 +136,24 @@ class _TransactionList extends StatelessWidget {
         }
 
         return Column(
-          children: expenses.map((expense) {
+          children: reversedExpenses.map((expense) {
             return Card(
               color: AppColors.card,
+              margin: const EdgeInsets.only(bottom: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               child: ListTile(
-                title: Text(expense.category),
+                title: Text(
+                  expense.category,
+                  style: const TextStyle(color: AppColors.text),
+                ),
                 subtitle: Text(
-                  expense.date.toString().split(' ')[0],
+                  '${expense.date.day}/${expense.date.month}/${expense.date.year}',
+                  style: const TextStyle(color: AppColors.mutedText),
                 ),
 
                 // ✏️ EDIT ICON
                 leading: IconButton(
-                  icon: const Icon(Icons.edit, size: 20),
+                  icon: const Icon(Icons.edit, size: 20, color: AppColors.mutedText),
                   onPressed: () {
                     showModalBottomSheet(
                       context: context,
@@ -148,79 +178,18 @@ class _TransactionList extends StatelessWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // ✅ CHANGED TO DOLLAR SIGN
                     Text(
-                      '₹${expense.amount.toStringAsFixed(2)}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      '\$${expense.amount.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.text,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () {
-                        // 👇 UPDATED: Uses ModalBottomSheet to match Add/Edit theme
-                        showModalBottomSheet(
-                          context: context,
-                          backgroundColor: AppColors.card,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(24)),
-                          ),
-                          builder: (context) => Padding(
-                            padding: EdgeInsets.fromLTRB(
-                              16,
-                              16,
-                              16,
-                              MediaQuery.of(context).padding.bottom + 24,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Delete Transaction',
-                                  style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 16),
-                                const Text(
-                                  'Are you sure you want to delete this transaction? This action cannot be undone.',
-                                  style: TextStyle(fontSize: 16),
-                                ),
-                                const SizedBox(height: 24),
-
-                                // Delete Button (Primary Action)
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red, // Red for danger, but same shape
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    onPressed: () {
-                                      expense.delete();
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text('Delete'),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-
-                                // Cancel Button (Secondary Action)
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text(
-                                      'Cancel',
-                                      style: TextStyle(color: AppColors.mutedText),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: () => _showDeleteDialog(context, expense),
                     ),
                   ],
                 ),
@@ -229,6 +198,76 @@ class _TransactionList extends StatelessWidget {
           }).toList(),
         );
       },
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, Expense expense) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MediaQuery.of(context).padding.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Delete Transaction',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.text),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Are you sure you want to delete this transaction? This action cannot be undone.',
+              style: TextStyle(fontSize: 16, color: AppColors.mutedText),
+            ),
+            const SizedBox(height: 24),
+
+            // Delete Button (Primary Action)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  expense.delete();
+                  Navigator.pop(context);
+                },
+                child: const Text('Delete'),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Cancel Button (Secondary Action)
+            SizedBox(
+              width: double.infinity,
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: AppColors.mutedText),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

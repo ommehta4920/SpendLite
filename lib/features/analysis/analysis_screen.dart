@@ -199,6 +199,14 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                     color: AppColors.primary.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
+                  child: Text(
+                    '$transactionCount transactions',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -211,8 +219,9 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
               ),
             ),
             const SizedBox(height: 4),
+            // ✅ CHANGED TO DOLLAR SIGN
             Text(
-              '₹${total.toStringAsFixed(2)}',
+              '\$${total.toStringAsFixed(2)}',
               style: const TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
@@ -227,7 +236,6 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
 
   // ---------------- CATEGORY LIST ----------------
   Widget _buildCategoryList(Map<String, double> categoryData, double total) {
-    // Sort by amount descending
     final sortedEntries = categoryData.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
@@ -263,7 +271,6 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
         children: [
           Row(
             children: [
-              // Color indicator
               Container(
                 width: 12,
                 height: 12,
@@ -273,8 +280,6 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-
-              // Category name
               Expanded(
                 child: Text(
                   category,
@@ -284,13 +289,12 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                   ),
                 ),
               ),
-
-              // Amount and percentage
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
+                  // ✅ CHANGED TO DOLLAR SIGN
                   Text(
-                    '₹${amount.toStringAsFixed(2)}',
+                    '\$${amount.toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -309,8 +313,6 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
             ],
           ),
           const SizedBox(height: 8),
-
-          // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(

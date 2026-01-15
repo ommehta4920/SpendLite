@@ -48,8 +48,20 @@ class BudgetCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                // ✅ ADDED PADDING HERE (Left and Right)
+                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               onPressed: () => _showSetBudgetDialog(context),
-              child: const Text('Set Budget'),
+              child: const Text(
+                'Set Budget',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
