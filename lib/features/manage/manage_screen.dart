@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/services/pdf_service.dart';
+import '../../core/utils/toast_service.dart';
 import '../transactions/model/expense_model.dart';
 import '../transactions/ui/edit_expense_sheet.dart';
 import '../budget/model/monthly_budget.dart';
@@ -21,37 +23,92 @@ class ManageScreen extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: const [
-          Text(
+        children: [
+          const Text(
             'Budget',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.text, // Ensure text color is consistent
-            ),
-          ),
-          SizedBox(height: 8),
-          _EditBudgetCard(),
-
-          SizedBox(height: 32),
-
-          Text(
-            'Transactions',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: AppColors.text,
             ),
           ),
-          SizedBox(height: 8),
-          _TransactionList(),
+          const SizedBox(height: 8),
+          const _EditBudgetCard(),
+
+          const SizedBox(height: 32),
+
+          // Transaction Header + PDF Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Transactions',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.text,
+                ),
+              ),
+
+              // ✅ Download Button with withAlpha()
+              InkWell(
+                onTap: () => _downloadReport(context),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    // 0.1 opacity * 255 ≈ 26
+                    color: AppColors.primary.withAlpha(26),
+                    borderRadius: BorderRadius.circular(8),
+                    // 0.5 opacity * 255 ≈ 128
+                    border: Border.all(color: AppColors.primary.withAlpha(128)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.download, size: 16, color: AppColors.primary),
+                      SizedBox(width: 6),
+                      Text(
+                        'PDF',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 8),
+          const _TransactionList(),
         ],
       ),
     );
   }
+
+  void _downloadReport(BuildContext context) async {
+    final box = Hive.box<Expense>('expenses');
+
+    if (box.isEmpty) {
+      ToastService.show(context, 'No transactions to export', isError: true);
+      return;
+    }
+
+    try {
+      final expenses = box.values.toList()
+        ..sort((a, b) => b.date.compareTo(a.date));
+
+      await PdfService.generateTransactionReport(expenses);
+    } catch (e) {
+      ToastService.show(context, 'Failed to generate PDF', isError: true);
+    }
+  }
 }
 
-/* ------------------ EDIT BUDGET ------------------ */
+/* ------------------ EDIT BUDGET (Unchanged) ------------------ */
 
 class _EditBudgetCard extends StatelessWidget {
   const _EditBudgetCard();
@@ -84,7 +141,6 @@ class _EditBudgetCard extends StatelessWidget {
             ),
             subtitle: Text(
               currentLimit > 0
-              // ✅ CHANGED TO DOLLAR SIGN
                   ? '\$${currentLimit.toStringAsFixed(2)}'
                   : 'No budget set',
               style: const TextStyle(color: AppColors.mutedText),
@@ -108,7 +164,7 @@ class _EditBudgetCard extends StatelessWidget {
   }
 }
 
-/* ---------------- TRANSACTIONS ---------------- */
+/* ---------------- TRANSACTIONS (Unchanged) ---------------- */
 
 class _TransactionList extends StatelessWidget {
   const _TransactionList();
@@ -119,11 +175,12 @@ class _TransactionList extends StatelessWidget {
       valueListenable: Hive.box<Expense>('expenses').listenable(),
       builder: (context, box, _) {
         final expenses = box.values.toList()
-          ..sort((a, b) => b.date.compareTo(a.date)); // Sort newest first
+          ..sort((a, b) => b.date.compareTo(a.date));
 
-        final reversedExpenses = expenses.reversed.toList();
+        // No need to reverse since we sorted descending above
+        // final reversedExpenses = expenses.reversed.toList();
 
-        if (reversedExpenses.isEmpty) {
+        if (expenses.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(24),
             child: Center(
@@ -136,7 +193,7 @@ class _TransactionList extends StatelessWidget {
         }
 
         return Column(
-          children: reversedExpenses.map((expense) {
+          children: expenses.map((expense) {
             return Card(
               color: AppColors.card,
               margin: const EdgeInsets.only(bottom: 8),
@@ -150,8 +207,6 @@ class _TransactionList extends StatelessWidget {
                   '${expense.date.day}/${expense.date.month}/${expense.date.year}',
                   style: const TextStyle(color: AppColors.mutedText),
                 ),
-
-                // ✏️ EDIT ICON
                 leading: IconButton(
                   icon: const Icon(Icons.edit, size: 20, color: AppColors.mutedText),
                   onPressed: () {
@@ -173,12 +228,9 @@ class _TransactionList extends StatelessWidget {
                     );
                   },
                 ),
-
-                // 💰 AMOUNT + 🗑 DELETE
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // ✅ CHANGED TO DOLLAR SIGN
                     Text(
                       '\$${expense.amount.toStringAsFixed(2)}',
                       style: const TextStyle(
@@ -232,8 +284,6 @@ class _TransactionList extends StatelessWidget {
               style: TextStyle(fontSize: 16, color: AppColors.mutedText),
             ),
             const SizedBox(height: 24),
-
-            // Delete Button (Primary Action)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -253,8 +303,6 @@ class _TransactionList extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-
-            // Cancel Button (Secondary Action)
             SizedBox(
               width: double.infinity,
               child: TextButton(

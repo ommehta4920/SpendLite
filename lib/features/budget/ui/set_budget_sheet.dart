@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../model/monthly_budget.dart';
+import '../../../core/utils/toast_service.dart';
 
 class SetBudgetSheet extends StatefulWidget {
   final MonthlyBudget? existingBudget;
@@ -132,19 +133,14 @@ class _SetBudgetSheetState extends State<SetBudgetSheet> {
     final limit = double.tryParse(_controller.text);
 
     if (limit == null || limit <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid amount'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // ✅ NEW: Show error at top
+      ToastService.show(context, 'Please enter a valid amount', isError: true);
       return;
     }
 
     final box = Hive.box<MonthlyBudget>('budgets');
     final now = DateTime.now();
 
-    // Find existing budget for this month
     MonthlyBudget? existing;
     try {
       existing = box.values.firstWhere(
@@ -155,11 +151,9 @@ class _SetBudgetSheetState extends State<SetBudgetSheet> {
     }
 
     if (existing != null) {
-      // Update existing
       existing.limit = limit;
       existing.save();
     } else {
-      // Create new
       final budget = MonthlyBudget(
         year: now.year,
         month: now.month,
@@ -170,11 +164,10 @@ class _SetBudgetSheetState extends State<SetBudgetSheet> {
 
     Navigator.pop(context);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(existing != null ? 'Budget updated!' : 'Budget set!'),
-        backgroundColor: AppColors.primary,
-      ),
+    // ✅ NEW: Show success at top
+    ToastService.show(
+        context,
+        existing != null ? 'Budget updated!' : 'Budget set!'
     );
   }
 }

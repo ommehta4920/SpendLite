@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/toast_service.dart'; // ✅ Import ToastService
 import '../transactions/model/expense_model.dart';
 import '../budget/model/monthly_budget.dart';
 
@@ -267,7 +268,7 @@ class MoreScreen extends StatelessWidget {
 
   // ---------------- DIALOGS ----------------
 
-  // 1. Coming Soon Popup (Matched to Delete Popup Style)
+  // 1. Coming Soon Popup
   void _showComingSoon(BuildContext context, String featureName) {
     showModalBottomSheet(
       context: context,
@@ -277,21 +278,21 @@ class MoreScreen extends StatelessWidget {
       ),
       builder: (context) => Padding(
         padding: EdgeInsets.fromLTRB(
-          16, // Left
-          16, // Top
-          16, // Right
-          MediaQuery.of(context).padding.bottom + 32, // Bottom + Safe Area
+          16,
+          16,
+          16,
+          MediaQuery.of(context).padding.bottom + 56, // Added padding
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start, // Left Align
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 const Icon(Icons.construction, color: AppColors.primary, size: 24),
                 const SizedBox(width: 8),
                 Text(
-                  '$featureName',
+                  featureName,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -330,7 +331,7 @@ class MoreScreen extends StatelessWidget {
     );
   }
 
-  // 2. App Version Popup (Matched to Delete Popup Style)
+  // 2. App Version Popup
   void _showAppVersion(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -340,14 +341,14 @@ class MoreScreen extends StatelessWidget {
       ),
       builder: (context) => Padding(
         padding: EdgeInsets.fromLTRB(
-          16, // Left
-          16, // Top
-          16, // Right
-          MediaQuery.of(context).padding.bottom + 32, // Bottom + Safe Area
+          16,
+          16,
+          16,
+          MediaQuery.of(context).padding.bottom + 56, // Added padding
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start, // Left Align
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Row(
               children: [
@@ -403,7 +404,7 @@ class MoreScreen extends StatelessWidget {
     );
   }
 
-  // 3. Clear Data Dialog (The Reference Style)
+  // 3. Clear Data Dialog
   void _showClearDataDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -416,7 +417,7 @@ class MoreScreen extends StatelessWidget {
           16,
           16,
           16,
-          MediaQuery.of(context).padding.bottom + 32,
+          MediaQuery.of(context).padding.bottom + 56, // Added padding
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -459,22 +460,14 @@ class MoreScreen extends StatelessWidget {
 
                     if (context.mounted) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('All data cleared successfully'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
+                      // ✅ UPDATED: Use ToastService for TOP notification
+                      ToastService.show(context, 'All data cleared successfully');
                     }
                   } catch (e) {
                     if (context.mounted) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Failed to clear data'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                      // ✅ UPDATED: Use ToastService for TOP error
+                      ToastService.show(context, 'Failed to clear data', isError: true);
                     }
                   }
                 },
