@@ -44,7 +44,7 @@ No login. No internet. No clutter.
 
 | Add Expense | More |
 |-------------|------|
-| ![](screenshots/add_expense.jpeg) | ![](screenshots/more.jpeg) |
+| ![](screenshots/add-expense.jpeg) | ![](screenshots/more.jpeg) |
 
 ---
 
