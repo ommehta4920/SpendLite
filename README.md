@@ -40,11 +40,11 @@ No login. No internet. No clutter.
 
 | Home | Analysis | Manage |
 |------|----------|--------|
-| ![](screenshots/home.png) | ![](screenshots/analysis.png) | ![](screenshots/manage.png) |
+| ![](screenshots/home.jpeg) | ![](screenshots/analysis.jpeg) | ![](screenshots/manage.jpeg) |
 
 | Add Expense | More |
 |-------------|------|
-| ![](screenshots/add_expense.png) | ![](screenshots/more.png) |
+| ![](screenshots/add_expense.jpeg) | ![](screenshots/more.jpeg) |
 
 ---
 
